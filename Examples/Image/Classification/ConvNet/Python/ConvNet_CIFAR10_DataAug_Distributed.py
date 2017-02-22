@@ -125,20 +125,19 @@ def train_and_test(network, trainer, train_source, test_source, progress_printer
 
     mb_size_schedule = cntk.minibatch_size_schedule(minibatch_size)
 
-    training_session = cntk.training_session(training_minibatch_source = train_source,
-                                             trainer = trainer,
-                                             model_inputs_to_mb_source_mapping = input_map, 
-                                             mb_size_schedule = mb_size_schedule) \
-        .with_progress_printing(progress_printer, frequency=epoch_size) \
-        .with_checkpointing(frequency = epoch_size, filename = os.path.join(model_path, "ConvNet_CIFAR10_DataAug"),
+    config = cntk.TrainingSessionConfig(mb_source = train_source,
+                                        input_vars_to_streams = input_map, 
+                                        mb_size_schedule = mb_size_schedule) \
+        .progress_printing(progress_printer, frequency=epoch_size) \
+        .checkpointing(frequency = epoch_size, filename = os.path.join(model_path, "ConvNet_CIFAR10_DataAug"),
                             restore = restore) \
-        .with_cross_validation(source = test_source, schedule=mb_size_schedule)
+        .cross_validation(source = test_source, schedule=mb_size_schedule)
 
     # Train all minibatches
     if profiling:
         cntk.start_profiler(sync_gpu=True)
 
-    training_session.train()
+    cntk.training_session(trainer=trainer, config=config).train()
 
     if profiling:
         cntk.stop_profiler()

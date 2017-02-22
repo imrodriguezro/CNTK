@@ -170,14 +170,14 @@ def train_and_test(network, trainer, train_source, test_source, printer, minibat
     mb_size_schedule = cntk.minibatch_size_schedule(minibatch_size))
 
     # Train all minibatches 
-    cntk.training_session(trainer = trainer,
-                          training_minibatch_source = train_source, 
-                          model_inputs_to_mb_source_mapping = input_map, 
-                          mb_size_schedule = mb_size_schedule) \
-        .with_progress_printing(printer=printer, frequency=epoch_size) \
-        .with_checkpointing(filename=os.path.join(model_path, model_name), restore=restore) \
-        .with_cross_validation(source=test_source, schedule=mb_size_schedule) \
-        .train(device)
+    config = cntk.TrainingSessionConfig(mb_source = train_source, 
+                                        input_vars_to_streams = input_map, 
+                                        mb_size_schedule = mb_size_schedule) \
+        .progress_printing(printer=printer, frequency=epoch_size) \
+        .checkpointing(filename=os.path.join(model_path, model_name), restore=restore) \
+        .cross_validation(source=test_source, schedule=mb_size_schedule)
+
+    cntk.training_session(trainer=trainer, config=config).train(device)
 
 # Train and evaluate the network.
 def alexnet_train_and_eval(train_data, test_data, num_quantization_bits=32, minibatch_size=256, epoch_size = 1281167, max_epochs=112,

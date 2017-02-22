@@ -89,7 +89,7 @@ namespace CNTK
 
     TrainingSessionConfig& TrainingSessionConfig::ProgressPrinting(size_t progressFrequency)
     {
-        if (m_progressFrequencyInSamples)
+        if (m_withProgressPrinting)
             RuntimeError("Progress printing configuration has already been specified.");
 
         m_progressFrequencyInSamples = progressFrequency;
@@ -273,7 +273,9 @@ namespace CNTK
         // In case of incremental - save final checkpoint.
         // This is required only when we keep all existing checkpoints, otherwise 
         // The checkpoint was already saved with the proper name.
-        if (m_config.m_preserveAllCheckpoints && !fexists(m_config.m_checkPointFileName))
+        if (m_config.m_withCheckpointing &&
+            m_config.m_preserveAllCheckpoints &&
+            !fexists(m_config.m_checkPointFileName))
             SaveFinalCheckpoint();
     }
 

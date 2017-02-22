@@ -161,14 +161,13 @@ def train_and_test(network, trainer, train_source, test_source, progress_printer
     mb_size_schedule = cntk.minibatch_size_schedule(minibatch_size)
 
     # Train all minibatches 
-    cntk.training_session(training_minibatch_source = train_source, 
-                          trainer = trainer,
-                          model_inputs_to_mb_source_mapping = input_map, 
-                          mb_size_schedule = mb_size_schedule) \
-        .with_progress_printing(printer=progress_printer, frequency=epoch_size) \
-        .with_checkpointing(filename = os.path.join(model_path, model_name), restore=restore) \
-        .with_cross_validation(source=test_source, schedule=mb_size_schedule) \
-        .train()
+    config = cntk.TrainingSession(mb_source = train_source, input_vars_to_streams = input_map, 
+                                  mb_size_schedule = mb_size_schedule) \
+        .progress_printing(printer=progress_printer, frequency=epoch_size) \
+        .checkpointing(filename = os.path.join(model_path, model_name), restore=restore) \
+        .cross_validation(source=test_source, schedule=mb_size_schedule)
+
+    cntk.training_session(trainer=trainer, config=config).train()
 
 # Train and evaluate the network.
 def vgg16_train_and_eval(train_data, test_data, num_quantization_bits=32, minibatch_size=128, epoch_size = 1281167, max_epochs=80, 

@@ -7,7 +7,7 @@
 import numpy as np
 import sys
 import os
-from cntk import Trainer, training_session, minibatch_size_schedule
+from cntk import Trainer, training_session, minibatch_size_schedule, TrainingSessionConfig
 from cntk.io import MinibatchSource, CTFDeserializer, StreamDef, StreamDefs, INFINITELY_REPEAT, FULL_DATA_SWEEP
 from cntk.device import cpu, set_default_device
 from cntk.learner import sgd, learning_rate_schedule, UnitType
@@ -79,13 +79,12 @@ def simple_mnist():
         tag='Training',
         num_epochs=num_sweeps_to_train_with)
 
-    training_session(training_minibatch_source = reader_train,
-                     trainer = trainer,
-                     mb_size_schedule = minibatch_size_schedule(minibatch_size),
-                     model_inputs_to_mb_source_mapping = input_map,
-                     max_training_samples = num_samples_per_sweep * num_sweeps_to_train_with) \
-        .with_progress_printing(printer=progress_printer, frequency=num_samples_per_sweep) \
-        .train()
+    config = TrainingSessionConfig(mb_source = reader_train,
+                                   mb_size_schedule = minibatch_size_schedule(minibatch_size),
+                                   input_vars_to_streams = input_map,
+                                   max_samples = num_samples_per_sweep * num_sweeps_to_train_with) \
+        .progress_printing(printer=progress_printer, frequency=num_samples_per_sweep) \
+    training_session(trainer=trainer, config=config).train()
     
     # Load test data
     path = os.path.normpath(os.path.join(data_dir, "Test-28x28_cntk_text.txt"))

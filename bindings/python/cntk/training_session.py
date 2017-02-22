@@ -30,9 +30,6 @@ class TrainingSession(cntk_py.TrainingSession):
         self.progress_printer = config.progress_printer
         self.cv_callback = config.cv_callback
 
-        if max_training_samples is None:
-            max_training_samples = sys.maxsize
-
         super(TrainingSession, self).__init__(
             trainer,
             config)
@@ -103,7 +100,7 @@ class TrainingSessionConfig(cntk_py.TrainingSessionConfig):
         max_samples (int): maximum number of samples used for training
     '''
     def __init__(self, mb_source, mb_size_schedule,
-                 input_vars_to_streams, max_samples):
+                 input_vars_to_streams, max_samples=None):
 
         self.progress_printer = None
         self.cv_callback = None
@@ -242,8 +239,9 @@ def minibatch_size_schedule(schedule, epoch_size=1):
 
 
 @typemap
-def training_session(training_minibatch_source,
-                     trainer, mb_size_schedule,
+def training_session(trainer,
+                     training_minibatch_source=None,
+                     mb_size_schedule=None,
                      progress_printer=None,
                      model_inputs_to_mb_source_mapping={},
                      checkpoint_filename=None,
@@ -294,22 +292,23 @@ def training_session(training_minibatch_source,
        import warnings
        warnings.warn('The provided parameters will be removed'
            ' in the next beta. Please use only trainer and config.'
-           'All aspects of training session can be'
+           ' All aspects of training session can be'
            'configured using TrainingSessionConfiguration.')    
 
-    config = TrainingSessionConfig(training_minibatch_source,
-                                   mb_size_schedule, model_inputs_to_mb_source_mapping,
-                                   max_samples=max_training_samples)
+    if config is None:
+        config = TrainingSessionConfig(training_minibatch_source,
+                                       mb_size_schedule, model_inputs_to_mb_source_mapping,
+                                       max_samples=max_training_samples)
 
-    if checkpoint_filename is not None:
-        config.checkpointing(checkpoint_filename, checkpoint_frequency,
-                             restore, save_all_checkpoints)
+        if checkpoint_filename is not None:
+            config.checkpointing(checkpoint_filename, checkpoint_frequency,
+                                 restore, save_all_checkpoints)
 
-    if cv_source is not None:
-        config.cross_validation(cv_source, cv_mb_size_schedule, cv_frequency)
+        if cv_source is not None:
+            config.cross_validation(cv_source, cv_mb_size_schedule, cv_frequency)
 
-    if progress_printer is not None:
-        config.progress_printing(progress_printer, progress_frequency)
+        if progress_printer is not None:
+            config.progress_printing(progress_printer, progress_frequency)
 
     return TrainingSession(trainer, config)
 
